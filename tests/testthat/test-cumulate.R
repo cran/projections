@@ -17,9 +17,7 @@ test_that("Printing as planned", {
   x <- project(i, runif(100, 0.8, 1.9), si, n_days = 30)
   y <- cumulate(x)
 
-  expect_equal_to_reference(capture.output(print(x)),
-                            file = "rds/print_x.rds")
-  expect_equal_to_reference(capture.output(print(y)),
-                            file = "rds/print_y.rds")
+  expect_identical(unname(apply(x, 2, cumsum)), unname(as.matrix(y)))
+  expect_error(cumulate(y), "x is already a cumulative incidence")
 
 })

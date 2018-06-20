@@ -27,16 +27,34 @@
 #'
 #'
 
-as.data.frame.projections <- function(x, ..., long = FALSE){
-    if (!long) {
-        colnames(x) <- paste("sim", seq_len(ncol(x)), sep = "_")
-        out <- cbind.data.frame(dates = attr(x, "dates"), x[])
-    } else {
-        out <- data.frame(date = rep(attr(x, "dates"), ncol(x)),
-                          incidence = as.vector(x),                          
-                          sim = rep(seq_len(nrow(x)), each = ncol(x)))
-    }
 
-    row.names(out) <- NULL
-    out
+as.matrix.projections <- function(x, ...) {
+  out <- x
+  class(out) <- "matrix"
+  attr(out, "dates")  <- NULL
+  attr(out, "cumulative")  <- NULL
+  rownames(out) <- as.character(get_dates(x))
+
+  out
+}
+
+
+
+
+#' @export
+#' @rdname conversions
+
+as.data.frame.projections <- function(x, ..., long = FALSE){
+  if (!long) {
+    colnames(x) <- paste("sim", seq_len(ncol(x)), sep = "_")
+    out <- cbind.data.frame(dates = attr(x, "dates"), as.matrix(x))
+      } else {
+        out <- data.frame(date = rep(attr(x, "dates"), ncol(x)),
+                          incidence = as.vector(x),
+                          sim = rep(seq_len(nrow(x)), each = ncol(x)))
+      }
+
+  row.names(out) <- NULL
+
+  out
 }
