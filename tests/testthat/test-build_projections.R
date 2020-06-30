@@ -5,11 +5,11 @@ test_that("Test round trip", {
 
     ## simulate basic epicurve
     dat <- c(0, 2, 2, 3, 3, 5, 5, 5, 6, 6, 6, 6)
-    i <- incidence(dat)
+    i <- incidence::incidence(dat)
 
 
     ## example with a function for SI
-    si <- distcrete("gamma", interval = 1L,
+    si <- distcrete::distcrete("gamma", interval = 1L,
                     shape = 1.5,
                     scale = 2, w = 0)
 
@@ -30,11 +30,11 @@ test_that("Test dates default", {
 
     ## simulate basic epicurve
     dat <- c(0, 2, 2, 3, 3, 5, 5, 5, 6, 6, 6, 6)
-    i <- incidence(dat)
+    i <- incidence::incidence(dat)
 
 
     ## example with a function for SI
-    si <- distcrete("gamma", interval = 1L,
+    si <- distcrete::distcrete("gamma", interval = 1L,
                     shape = 1.5,
                     scale = 2, w = 0)
 
@@ -52,8 +52,36 @@ test_that("Test errors", {
     skip_on_cran()
 
     expect_error(
+      new_projections(matrix(1:10, ncol = 2), dates = 1:10, cumulative = FALSE),
+      "Number of dates (10) does not match number of rows (5)",
+      fixed = TRUE)
+
+    expect_error(
       build_projections(matrix(1:10, ncol = 2), dates = 1:10),
       "Number of dates (10) does not match number of rows (5)",
       fixed = TRUE)
 
 })
+
+
+
+
+
+test_that("Test ordering", {
+    skip_on_cran()
+
+    mat <- matrix(round(rnorm(100, 10)), ncol = 20)
+    dates <- Sys.Date() + c(5, 1, 3, 2, 4)
+
+    ## test ordering
+    x <- build_projections(mat, dates)
+    expect_identical(get_dates(x), sort(dates))
+    expect_equal(as.vector(mat[order(dates), ]), as.vector(x))
+
+    ## test no ordering
+    x <- build_projections(mat, dates, order_dates = FALSE)
+    expect_identical(get_dates(x), dates)
+    expect_equal(as.vector(mat), as.vector(x))
+    
+})
+

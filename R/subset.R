@@ -42,12 +42,21 @@
     j <- TRUE
   }
 
+  ## we first subset the incidence matrix and then handle the dates; procedure
+  ## is not totally straightforward and needs to work for different types of
+  ## dates: numeric, integer, Date, etc.
+
   out <- as.matrix(x)[i, j, drop = FALSE]
-  attr(out, "dates") <- get_dates(x)[i]
-  rownames(out) <- as.character(get_dates(x)[i])
-  attr(out, "cumulative") <- attr(x, "cumulative")
-  class(out) <- c("projections", "matrix")
-  out
+
+  old_dates <- get_dates(x)
+  names(old_dates) <- as.character(old_dates)
+  new_dates_chr <- rownames(out)
+  new_dates <- old_dates[new_dates_chr]
+  new_dates <- unname(new_dates)
+  
+  cumulative <- attr(x, "cumulative")
+
+  new_projections(out, new_dates, cumulative)
 }
 
 

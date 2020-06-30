@@ -5,16 +5,34 @@
 \alias{add_projections}
 \title{Plot projections objects}
 \usage{
-\method{plot}{projections}(x, ...)
+\method{plot}{projections}(x, ylab = NULL, title = NULL, ...)
 
-add_projections(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
-  ribbon = TRUE, boxplots = FALSE, palette = quantile_pal,
-  quantiles_alpha = 1, linetype = 1, linesize = 0.5,
-  ribbon_quantiles = NULL, ribbon_color = NULL, ribbon_alpha = 0.3,
-  boxplots_color = "#47476b", boxplots_alpha = 0.8, outliers = TRUE)
+add_projections(
+  p,
+  x,
+  quantiles = c(0.01, 0.05, 0.1, 0.5),
+  ribbon = TRUE,
+  boxplots = FALSE,
+  palette = quantile_pal,
+  quantiles_alpha = 1,
+  linetype = 1,
+  linesize = 0.5,
+  ribbon_quantiles = NULL,
+  ribbon_color = NULL,
+  ribbon_alpha = 0.3,
+  boxplots_color = "#47476b",
+  boxplots_fill = "grey",
+  boxplots_alpha = 0.8,
+  outliers = TRUE
+)
 }
 \arguments{
 \item{x}{A \code{projections} object.}
+
+\item{ylab}{An optional label for the y-axis. If missing will default to 
+"predicted incidence" or, if cumulative, "predicted cumulative incidence"}
+
+\item{title}{An optional title.}
 
 \item{...}{Further arguments to be passed to \code{add_projections}.}
 
@@ -52,6 +70,8 @@ ribbon, from 0 (full transparency) to 1 (full opacity); defaults to 0.3.}
 
 \item{boxplots_color}{Any valid color, used for the boxplot.}
 
+\item{boxplots_fill}{Any valid color, used for filling the boxplot.}
+
 \item{boxplots_alpha}{A number used to control the transparency of the
 boxplots, from 0 (full transparency) to 1 (full opacity); defaults to 0.8.}
 
@@ -72,16 +92,18 @@ if (require(outbreaks) &&
     require(incidence) &&
     require(magrittr)) {
 
-si <- distcrete("gamma", interval = 1L,
-                 shape = 0.37,
-                 scale = 41.4, w = 0)
+si <- distcrete("gamma",
+                 interval = 1L,
+                 shape = 2.4,
+                 scale = 4.7,
+                 w = 0.5)
 
 i <- incidence(ebola_sim$linelist$date_of_onset)
 plot(i)
 
 ## add projections after the first 100 days, over 60 days
 set.seed(1)
-proj <- project(x = i[1:100], R = 2.1, si = si, n_days = 60)
+proj <- project(x = i[1:100], R = 1.4, si = si, n_days = 60)
 
 ## plotting projections: different options
 plot(proj)

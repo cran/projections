@@ -30,7 +30,7 @@
 
 as.matrix.projections <- function(x, ...) {
   out <- x
-  class(out) <- "matrix"
+  class(out) <- oldClass(out)[-1] # first class will be projections 
   attr(out, "dates")  <- NULL
   attr(out, "cumulative")  <- NULL
   rownames(out) <- as.character(get_dates(x))
@@ -51,7 +51,7 @@ as.data.frame.projections <- function(x, ..., long = FALSE){
       } else {
         out <- data.frame(date = rep(attr(x, "dates"), ncol(x)),
                           incidence = as.vector(x),
-                          sim = rep(seq_len(nrow(x)), each = ncol(x)))
+                          sim = rep(seq_len(ncol(x)), each = nrow(x)))
       }
 
   row.names(out) <- NULL

@@ -16,6 +16,11 @@
 #' @aliases plot.projections
 #'
 #' @param x A \code{projections} object.
+#' 
+#' @param ylab An optional label for the y-axis. If missing will default to 
+#'   "predicted incidence" or, if cumulative, "predicted cumulative incidence"
+#'   
+#' @param title An optional title.
 #'
 #' @param quantiles A vector of quantiles to plot, automatically completed to be
 #'   symmetric around the median.
@@ -45,6 +50,8 @@
 #'
 #' @param boxplots_color Any valid color, used for the boxplot.
 #'
+#' @param boxplots_fill Any valid color, used for filling the boxplot.
+#'
 #' @param boxplots_alpha A number used to control the transparency of the
 #'   boxplots, from 0 (full transparency) to 1 (full opacity); defaults to 0.8.
 #'
@@ -64,16 +71,18 @@
 #'     require(incidence) &&
 #'     require(magrittr)) {
 #'
-#' si <- distcrete("gamma", interval = 1L,
-#'                  shape = 0.37,
-#'                  scale = 41.4, w = 0)
+#' si <- distcrete("gamma",
+#'                  interval = 1L,
+#'                  shape = 2.4,
+#'                  scale = 4.7,
+#'                  w = 0.5)
 #'
 #' i <- incidence(ebola_sim$linelist$date_of_onset)
 #' plot(i)
 #'
 #' ## add projections after the first 100 days, over 60 days
 #' set.seed(1)
-#' proj <- project(x = i[1:100], R = 2.1, si = si, n_days = 60)
+#' proj <- project(x = i[1:100], R = 1.4, si = si, n_days = 60)
 #'
 #' ## plotting projections: different options
 #' plot(proj)
@@ -101,15 +110,23 @@
 #' }
 #'
 
-plot.projections <- function(x, ...) {
+plot.projections <- function(x, ylab = NULL, title = NULL, ...) {
   empty <- ggplot2::ggplot()
   out <- add_projections(empty, x, ...)
-  ylab <- ifelse(isTRUE(attr(x, "cumulative")),
-                 "Predicted cumulative incidence",
-                 "Predicted incidence")
-  out <- out + ggplot2::labs(x = "", y = ylab)
+  if (is.null(ylab)) {
+    ylab <- ifelse(isTRUE(attr(x, "cumulative")),
+                   "Predicted cumulative incidence",
+                   "Predicted incidence")  
+  }
+  
+  if (is.null(title)) {
+    title <- ggplot2::waiver()
+  }
+  
+  out <- out + ggplot2::labs(x = "", y = ylab, title = title)
   out
 }
+
 
 
 
@@ -129,12 +146,15 @@ add_projections <- function(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
                             ribbon_quantiles = NULL,
                             ribbon_color = NULL, ribbon_alpha = 0.3,
                             boxplots_color = "#47476b",
+                            boxplots_fill = "grey",
                             boxplots_alpha = 0.8,
                             outliers = TRUE) {
 
   if (!inherits(x, "projections")) {
-    stop("x must be a 'projections' object;",
-         "\nsee ?projections::project")
+    msg <- sprintf(
+      "`x` must be a 'projections' object but is a `%s`",
+      paste(class(x), collapse = ", "))
+    stop(msg)
   }
 
   ## Strategy: we start off the provided plot, which may well be empty
@@ -146,9 +166,9 @@ add_projections <- function(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
   ## - ribbon
 
   out <- p
-  dates <- attr(x, "dates")
+  dates <- get_dates(x)
 
-  if (!is.null(quantiles) && !isFALSE(quantiles) && !is.na(quantiles)) {
+  if (!is.null(quantiles) && !isFALSE(quantiles) && !all(is.na(quantiles))) {
     quantiles <- sort(unique(c(quantiles, 1 - quantiles)))
     quantiles <- quantiles[quantiles >= 0 & quantiles <= 1]
   }
@@ -159,7 +179,7 @@ add_projections <- function(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
   if (isTRUE(ribbon)) {
     ## find the ymin and ymax for ribbon
     if (is.null(ribbon_quantiles)) {
-      if (is.null(quantiles) || isFALSE(quantiles) || is.na(quantiles)) {
+      if (is.null(quantiles) || isFALSE(quantiles) || all(is.na(quantiles))) {
         ribbon_quantiles <- c(0, 1)
       } else {
         ribbon_quantiles <- range(quantiles)
@@ -193,6 +213,7 @@ add_projections <- function(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
           data = df,
           ggplot2::aes_string(x = "date", y = "incidence", group = "date"),
           color = transp(boxplots_color, boxplots_alpha),
+          fill = transp(boxplots_fill, boxplots_alpha),
           outlier.size = 0.5,
           outlier.color = ifelse(outliers, boxplots_color, "transparent")
         )
@@ -229,6 +250,14 @@ add_projections <- function(p, x, quantiles = c(0.01, 0.05, 0.1, 0.5),
     )
   }
 
+  ## We need to update the x scale, depending on the type of the dates
+
+  if (inherits(dates, c("Date", "POSIXct"))) {
+    out <- out + ggplot2::scale_x_date()
+  } else {
+    out <- out + ggplot2::scale_x_continuous()
+  }
+  
   out
 }
 
